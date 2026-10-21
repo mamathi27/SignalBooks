@@ -1,4 +1,4 @@
-# <SignalBooks>
+# SignalBooks
 
 **Telecom and network-equipment company reports explained, with cheaper models for easy questions and stronger models for hard ones.**
 
