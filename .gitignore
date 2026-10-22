@@ -8,3 +8,15 @@ logs/
 data/raw/
 *.sqlite
 .DS_Store
+
+
+# Full source-document collection stays local
+/data/*
+
+# Keep the sample-data placeholder
+!/data/sample/
+/data/sample/*
+!/data/sample/.gitkeep
+
+# Annual and quarterly PDFs already committed under dataset
+/dataset/**/*.pdf
