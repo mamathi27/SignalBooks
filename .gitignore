@@ -1,22 +1,48 @@
+# Environment secrets
 .env
+.env.*
+!.env.example
+
+# Python virtual environments
+venv/
 .venv/
 __pycache__/
-*.pyc
+*.py[cod]
+
+# Python testing and linting
 .pytest_cache/
 .ruff_cache/
-logs/
-data/raw/
-*.sqlite
-.DS_Store
+.coverage
+htmlcov/
 
+# Logs and local databases
+logs/
+*.sqlite
+*.sqlite3
+*.db
+
+# Operating system files
+.DS_Store
+Thumbs.db
 
 # Full source-document collection stays local
 /data/*
 
-# Keep the sample-data placeholder
+# Allow the sample folder and its PDF files
 !/data/sample/
-/data/sample/*
-!/data/sample/.gitkeep
+!/data/sample/*.pdf
 
-# Annual and quarterly PDFs already committed under dataset
+# Allow the dataset manifest
+!/data/manifest.csv
+
+# Downloader output stays local
+/data/raw/
+
+# Python-generated page-count output
+/data/page_counts.csv
+
+# Discovered URL candidates (can be regenerated)
+/data/discovered_urls.csv
+
+# Annual and quarterly PDFs in the separate dataset directory
 /dataset/**/*.pdf

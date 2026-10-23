@@ -11,6 +11,7 @@ SignalBooks aims to make interview preparation more affordable by routing simple
 
 ## Who it is for
 - **Primary user:** Placement-cell coordinators at engineering colleges who prepare ECE students for interviews at telecom operators and network-equipment companies.
+
 - **End users:** ECE students who want to understand company performance, financial metrics, business developments, and industry-specific information before placement interviews.
 
 ## Signature feature

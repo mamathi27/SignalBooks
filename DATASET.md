@@ -1,4 +1,4 @@
-# SignalBooks Dataset
+﻿# SignalBooks Dataset
 
 ## 1. Overview
 
@@ -90,59 +90,109 @@ The current directory structure is:
 
 ```text
 data/
-├── airtel/
-├── HFCL/
-├── Indus Tower/
-├── Tata Communications/
-├── Tejas Networks/
-├── Vodafone Idea/
-└── sample/
-    └── .gitkeep
+â”œâ”€â”€ airtel/                  # Local collection; not committed
+â”œâ”€â”€ HFCL/                    # Local collection; not committed
+â”œâ”€â”€ Indus Tower/             # Local collection; not committed
+â”œâ”€â”€ Tata Communications/     # Local collection; not committed
+â”œâ”€â”€ Tejas Networks/          # Local collection; not committed
+â”œâ”€â”€ Vodafone Idea/           # Local collection; not committed
+â”œâ”€â”€ raw/                     # Downloader output; not committed
+â”œâ”€â”€ sample/                  # Three small sample PDFs
+â”‚   â”œâ”€â”€ tejas-earnings-presentation-q4fy25.pdf
+â”‚   â”œâ”€â”€ tejas-financial-statement-jan-2026.pdf
+â”‚   â””â”€â”€ tejas-investor-presentation-q2fy25.pdf
+â””â”€â”€ manifest.csv
 ```
 
-The `sample/` directory currently contains a placeholder. The complete research documents are not included in the Git-tracked dataset.
+The `sample/` directory contains three small Tejas Networks PDF samples for demonstration and repository review. The complete research collection remains local and is not included in the Git-tracked dataset.
 
 ## 7. Source Provenance
 
-Documents should be collected from official company investor-relations websites and official stock-exchange disclosures wherever possible.
+Documents are collected from official company investor-relations websites and official stock-exchange disclosures wherever possible.
 
-For each document, the final inventory should record:
+For each document, the inventory should record:
 
 - Company name
 - Exact filename
 - Financial year and reporting quarter
 - Document type
 - Original source URL
-- Date accessed
+- Date accessed, where known
 - File format and size
 - Page count for PDFs
-- Copyright and redistribution notes
+- Copyright, licence, and redistribution notes
 
-The current filename-and-size inventory does not contain source URLs, page counts, or verified document contents. These fields remain to be collected.
+The three PDFs in `data/sample/` have been compared against files downloaded from their official Tejas Networks URLs. Each comparison produced an identical SHA-256 hash. The verified URLs, byte sizes, hashes, and verification statuses are recorded in `data/manifest.csv`.
+
+The original download dates for the sample copies are unknown and remain blank. The applicable website terms and redistribution permissions have not yet been fully reviewed. These must not be assumed from public availability alone.
+
+The source provenance of the larger local collection is still being verified.
 
 ## 8. Data Quality and Coverage
 
-Before the dataset is used for document retrieval or question answering, the following checks are required:
+The local collection contains 124 report files across six company folders: 112 PDFs and 12 Excel files, approximately 532 MB in total.
 
-1. Verify each document opens correctly.
+The PDF scan reported 7,386 pages across 112 PDFs and zero unreadable PDFs. This count applies to the local collection, not just the three committed sample PDFs. Successful page counting does not prove that a PDF is searchable or OCR-processed.
+
+Before the full collection is used for document retrieval or question answering:
+
+1. Verify that each document opens correctly.
 2. Confirm its company, reporting period, and document type from the document itself.
 3. Check for duplicate or alternate-version files.
 4. Identify missing reporting periods.
 5. Record PDF page counts and text-extraction quality.
 6. Verify source URLs and applicable usage terms.
+7. Distinguish reporting periods from the dates documents were published.
 
-The current collection includes some FY27-labelled documents. Their reporting periods should be recorded separately when defining the intended historical coverage.
+The collection includes some FY27-labelled documents. Their reporting periods should be recorded separately when defining the intended historical coverage. The full collection has not yet been verified document by document.
 
 ## 9. Copyright and Usage
 
 Public availability does not automatically grant permission to redistribute a document.
 
-Users should respect the copyright notices, website terms, and applicable restrictions of the original publishers. Source documents should be obtained from their original publishers where necessary.
+Users should respect the copyright notices, website terms, and applicable restrictions of the original publishers. The collection of third-party reports does not imply ownership of those reports or grant additional redistribution rights.
 
-The collection of third-party reports does not imply ownership of those reports or grant additional redistribution rights.
+Only the three small sample PDFs are intended for inclusion in the repository. The complete research documents remain local and should not be committed.
+
+The specific source terms and redistribution permissions for the sample documents still require review and recording.
 
 ## 10. Dataset Status
 
-**Status: Local collection inventoried; document-level verification in progress.**
+**Status: Local collection inventoried; sample source files verified; full-collection provenance and usage review in progress.**
 
-The current file count and sizes have been recorded. Source provenance, document contents, exact reporting-period coverage, duplicate status, page counts, and text-extraction quality still need to be verified before the dataset can be described as complete.
+The local file count and sizes have been recorded. All three sample PDFs have verified official source URLs and matching SHA-256 hashes. The original download dates for these samples are unknown.
+
+The larger collection still requires document-level source verification, reporting-period checks, duplicate checks, usage-term review, and text-extraction quality checks before it can be described as fully verified.
+
+## Sample Dataset Status
+
+### Sample files
+
+Three Tejas Networks PDF files are included in `data/sample/`:
+
+- `tejas-earnings-presentation-q4fy25.pdf`
+- `tejas-financial-statement-jan-2026.pdf`
+- `tejas-investor-presentation-q2fy25.pdf`
+
+### Verified source URLs
+
+- Q4 FY25 earnings presentation: https://www.tejasnetworks.com/wp-content/uploads/2025/04/Q4FY25-Earnings-Call-Presentation-final.pdf
+- January 2026 consolidated published statement: https://www.tejasnetworks.com/wp-content/uploads/2026/01/Consolidated-Published-Statement-signed-jan-2026.pdf
+- Q2 FY25 investor presentation: https://www.tejasnetworks.com/wp-content/uploads/2024/10/Investor-Presentation_Q225.pdf
+
+For each sample, the local SHA-256 hash matched the hash of the PDF downloaded from its listed official URL. The manifest records the verified URLs, byte sizes, hashes, and statuses. Original download dates remain unknown and blank.
+
+### Terms and licence review
+
+The sample files' applicable website terms, copyright notices, and redistribution permissions still need to be checked and documented. No unrestricted redistribution permission is assumed.
+
+### Local collection count
+
+The local PDF scan reported 112 PDFs, 7,386 pages, and zero unreadable PDFs. These figures describe the local collection, not only the three committed samples.
+
+### Remaining verification
+
+- Review and record the applicable terms or licence and date checked.
+- Complete source and reporting-period verification for the larger collection.
+- Review the final manifest and staged repository files before committing.
+- Confirm that the raw collection and virtual environment remain excluded from Git.
