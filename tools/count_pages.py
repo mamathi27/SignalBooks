@@ -1,6 +1,7 @@
 ﻿"""Count PDF pages and report unreadable PDFs in the dataset."""
-
+import csv
 from pathlib import Path
+
 from pypdf import PdfReader
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,9 +21,8 @@ for pdf in DATA_DIR.rglob("*.pdf"):
         if reader.is_encrypted:
             try:
                 reader.decrypt("")
-            except Exception:
-                raise ValueError("Encrypted PDF cannot be read")
-
+            except Exception as error:
+                raise ValueError("Encrypted PDF cannot be read") from error
         pages = len(reader.pages)
         rows.append({
             "filename": str(pdf.relative_to(ROOT)),
@@ -41,7 +41,7 @@ for pdf in DATA_DIR.rglob("*.pdf"):
         broken += 1
         print(f"BROKEN: {pdf.name}: {error}")
 
-import csv
+
 
 with OUTPUT.open("w", newline="", encoding="utf-8") as file:
     writer = csv.DictWriter(

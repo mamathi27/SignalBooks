@@ -1,9 +1,10 @@
-﻿from html.parser import HTMLParser
-from pathlib import Path
-from urllib.parse import urljoin, urlparse, urldefrag
-from urllib.robotparser import RobotFileParser
-import csv
+﻿import csv
 import time
+from html.parser import HTMLParser
+from pathlib import Path
+from urllib.parse import urldefrag, urljoin, urlparse
+from urllib.robotparser import RobotFileParser
+
 import requests
 
 ROOT = Path(__file__).resolve().parents[1]

@@ -11,7 +11,7 @@ Downloads files into data/raw/ and records metadata in data/manifest.csv.
 import csv
 import hashlib
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 from urllib.robotparser import RobotFileParser
@@ -179,7 +179,7 @@ def main():
                         "filename": filename,
                         "source_url": url,
                         "downloaded_on": datetime.now(
-                            timezone.utc
+                            UTC
                         ).isoformat(),
                         "bytes": byte_count,
                         "sha256": digest.hexdigest(),
