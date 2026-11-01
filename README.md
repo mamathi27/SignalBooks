@@ -1,5 +1,7 @@
 # SignalBooks
 
+[![CI](https://github.com/mamathi27/SignalBooks/actions/workflows/ci.yml/badge.svg)](https://github.com/mamathi27/SignalBooks/actions/workflows/ci.yml)
+
 **Telecom and network-equipment company reports explained, with cheaper models for easy questions and stronger models for hard ones.**
 
 ## Problem
@@ -62,7 +64,13 @@ curl localhost:8000/health
 ```
 
 ## Live link
-<Added in Week 2>
+[https://signalbooks.onrender.com](https://signalbooks.onrender.com)
+
+**API documentation:** [Swagger UI](https://signalbooks.onrender.com/docs)
+
+**Health check:** [Live health endpoint](https://signalbooks.onrender.com/health)
+
+**Deployment note:** The free hosting instance may sleep after inactivity. Usage logs are stored locally and are not persistent across instance replacement or restart.
 ## PostgreSQL and pgvector (Session 6)
 
 SignalBooks includes PostgreSQL 16 and pgvector support.
