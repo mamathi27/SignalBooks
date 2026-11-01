@@ -63,3 +63,44 @@ curl localhost:8000/health
 
 ## Live link
 <Added in Week 2>
+## PostgreSQL and pgvector (Session 6)
+
+SignalBooks includes PostgreSQL 16 and pgvector support.
+
+### Prerequisites
+- Docker Desktop installed and running.
+- Docker Compose available through docker compose.
+
+### Configure environment
+
+Copy the example environment file:
+
+    Copy-Item .env.example .env
+
+Update POSTGRES_PASSWORD in .env to a strong password.
+
+### Start the application
+
+    docker compose up --build
+
+PostgreSQL starts first. The API starts after the database health check succeeds. The initialization script enables pgvector.
+
+### Verify the application
+
+- API liveness: http://localhost:8000/health
+- Database readiness: http://localhost:8000/ready
+- API documentation: http://localhost:8000/docs
+
+/health checks whether the API is running. /ready checks PostgreSQL connectivity and pgvector availability.
+
+### Stop the application
+
+    docker compose down
+
+The named PostgreSQL volume preserves database data.
+
+To remove the database volume and its stored data:
+
+    docker compose down -v
+
+Warning: The -v option permanently deletes the Compose database volume.

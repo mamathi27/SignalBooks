@@ -1,7 +1,8 @@
 ﻿import json
 from typing import Annotated
 
-from fastapi import Depends, FastAPI
+import psycopg
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 
 from app.config import Settings, get_settings
@@ -45,6 +46,56 @@ def health(settings: SettingsDep) -> dict:
         "app": settings.app_name,
         "environment": settings.environment,
     }
+
+
+@app.get("/ready")
+def ready(settings: SettingsDep) -> dict:
+    """Readiness: check PostgreSQL connectivity and pgvector."""
+    if not settings.database_url:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "status": "not_ready",
+                "reason": "DATABASE_URL is not configured",
+            },
+        )
+
+    try:
+        with psycopg.connect(
+            settings.database_url,
+            connect_timeout=2,
+        ) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT extversion FROM pg_extension "
+                    "WHERE extname = 'vector'"
+                )
+                result = cursor.fetchone()
+
+        if result is None:
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "status": "not_ready",
+                    "reason": "pgvector extension is not installed",
+                },
+            )
+
+        return {
+            "status": "ready",
+            "database": "connected",
+            "pgvector": "available",
+            "pgvector_version": result[0],
+        }
+
+    except psycopg.Error:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "status": "not_ready",
+                "reason": "PostgreSQL connection or query failed",
+            },
+        ) from None
 
 
 @app.post("/chat", response_model=ChatResponse)

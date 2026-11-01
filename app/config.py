@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     app_name: str = "SignalBooks"
     environment: str = "local"
 
+    # Optional PostgreSQL connection string
+    database_url: str = ""
+
     # Provider selection: fake or openai_compatible
     llm_provider: str = "fake"
 

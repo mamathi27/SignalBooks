@@ -1,0 +1,49 @@
+﻿services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: signalbooks-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-signalbooks}
+      POSTGRES_USER: ${POSTGRES_USER:-signalbooks}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/001-enable-vector.sql:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  api:
+    build: .
+    container_name: signalbooks-api
+    environment:
+      APP_NAME: SignalBooks
+      ENVIRONMENT: docker
+      LLM_PROVIDER: ${LLM_PROVIDER:-fake}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_FALLBACK_MODEL: ${LLM_FALLBACK_MODEL:-fake-fallback}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-30}
+      PRICE_INPUT_PER_MILLION: ${PRICE_INPUT_PER_MILLION:-0.15}
+      PRICE_OUTPUT_PER_MILLION: ${PRICE_OUTPUT_PER_MILLION:-0.60}
+      USD_TO_INR_RATE: ${USD_TO_INR_RATE:-85.0}
+      ESTIMATED_CHARS_PER_TOKEN: ${ESTIMATED_CHARS_PER_TOKEN:-4}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-signalbooks}:${POSTGRES_PASSWORD:-change-me}@db:5432/${POSTGRES_DB:-signalbooks}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
