@@ -10,23 +10,22 @@ ECE students attend interviews at telecom companies without knowing company-spec
 
 SignalBooks aims to make interview preparation more affordable by routing simple questions to cheaper AI models and complex questions to stronger models while keeping answers useful and grounded in company reports.
 
-
 ## Who it is for
-- **Primary user:** Placement-cell coordinators at engineering colleges who prepare ECE students for interviews at telecom operators and network-equipment companies.
 
+- **Primary user:** Placement-cell coordinators at engineering colleges who prepare ECE students for interviews at telecom operators and network-equipment companies.
 - **End users:** ECE students who want to understand company performance, financial metrics, business developments, and industry-specific information before placement interviews.
 
 ## Signature feature
+
 A live cost meter on every answer shows which AI model responded, the tokens used, and the cost in paise. This helps users track AI usage and understand the cost of each response.
 
+## Hardest problem: Cost-Aware Model Routing
 
-## Hardest problem : Cost-Aware Model Routing
 The main technical challenge is deciding which AI model should answer each question.
 
 A small classifier is intended to route simple lookups, such as "What was Airtel's ARPU last quarter?", to a cheaper model. Complex questions, such as "Compare the CAPEX intensity of Airtel and Vodafone Idea", are intended to use a stronger model.
 
 The system will track tokens and cost per query and evaluate whether this routing strategy can reduce costs while keeping answer quality within two percentage points of an always-strong-model baseline.
-
 
 ## Dataset
 
@@ -41,7 +40,6 @@ SignalBooks will use publicly available annual reports and quarterly results pre
 | Tejas Networks | [Investor Relations](https://www.tejasnetworks.com/investor-relations/) | Not yet collected | Not yet counted | Reuse terms to be checked |
 | HFCL | [Investor Financial Information](https://www.hfcl.com/investors/financial-info) | Not yet collected | Not yet counted | Reuse terms to be checked |
 
-
 **Dataset target:**
 
 - **Annual reports:** At least 18 in total, targeting three reports per company across three financial years.
@@ -50,65 +48,114 @@ SignalBooks will use publicly available annual reports and quarterly results pre
 
 **Note:** The target is 18 annual reports in total (three per company), not 18 per company. Quarterly PDFs will be counted toward the 40-presentation target only after verifying their reporting periods, document types, and uniqueness.
 
-
 ## 10 real questions
+
 See [docs/QUESTIONS.md](docs/QUESTIONS.md).
 
 ## Run it
+
 ```bash
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+python -m venv .venv && source .venv/bin/activate
+# Windows: .venv\Scripts\activate
+
 pip install -r requirements-dev.txt
-cp .env.example .env                                 # Windows: copy .env.example .env
+
+cp .env.example .env
+# Windows: Copy-Item .env.example .env
+
 uvicorn app.main:app --reload
+
 curl localhost:8000/health
 ```
 
 ## Live link
-[https://signalbooks.onrender.com](https://signalbooks.onrender.com)
+
+[SignalBooks](https://signalbooks.onrender.com)
 
 **API documentation:** [Swagger UI](https://signalbooks.onrender.com/docs)
 
 **Health check:** [Live health endpoint](https://signalbooks.onrender.com/health)
 
 **Deployment note:** The free hosting instance may sleep after inactivity. Usage logs are stored locally and are not persistent across instance replacement or restart.
-## PostgreSQL and pgvector (Session 6)
+
+## PostgreSQL and pgvector
 
 SignalBooks includes PostgreSQL 16 and pgvector support.
 
 ### Prerequisites
+
 - Docker Desktop installed and running.
-- Docker Compose available through docker compose.
+- Docker Compose available through `docker compose`.
 
 ### Configure environment
 
 Copy the example environment file:
 
-    Copy-Item .env.example .env
+```powershell
+Copy-Item .env.example .env
+```
 
-Update POSTGRES_PASSWORD in .env to a strong password.
+Update `POSTGRES_PASSWORD` in `.env` to a strong password.
 
 ### Start the application
 
-    docker compose up --build
+```powershell
+docker compose up --build
+```
 
 PostgreSQL starts first. The API starts after the database health check succeeds. The initialization script enables pgvector.
 
 ### Verify the application
 
-- API liveness: http://localhost:8000/health
-- Database readiness: http://localhost:8000/ready
-- API documentation: http://localhost:8000/docs
+- API liveness: `http://localhost:8000/health`
+- Database readiness: `http://localhost:8000/ready`
+- API documentation: `http://localhost:8000/docs`
 
-/health checks whether the API is running. /ready checks PostgreSQL connectivity and pgvector availability.
+`/health` checks whether the API is running. `/ready` checks PostgreSQL connectivity and pgvector availability.
 
 ### Stop the application
 
-    docker compose down
+```powershell
+docker compose down
+```
 
 The named PostgreSQL volume preserves database data.
 
 To remove the database volume and its stored data:
 
-    docker compose down -v
+```powershell
+docker compose down -v
+```
 
-Warning: The -v option permanently deletes the Compose database volume.
+**Warning:** The `-v` option permanently deletes the Compose database volume.
+
+## Gemini API configuration
+
+SignalBooks supports external LLM providers through an OpenAI-compatible API interface.
+
+To use Google Gemini:
+
+1. Create an API key in [Google AI Studio](https://aistudio.google.com/apikey).
+2. Copy `.env.example` to `.env`.
+3. Configure the following values in your `.env` file:
+
+```env
+LLM_PROVIDER=openai_compatible
+LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
+LLM_API_KEY=your-gemini-api-key
+LLM_MODEL=gemini-3.6-flash
+LLM_FALLBACK_MODEL=fake-fallback
+LLM_TIMEOUT_SECONDS=30
+```
+
+Keep your API key private. Never commit `.env` or expose the key in source code.
+
+The configured fallback uses a deterministic fake provider, not a second external AI model. If Gemini fails and fallback is activated, the response may be simulated.
+
+### Usage and cost tracking
+
+SignalBooks records token usage and calculates estimated costs using configured input and output prices per million tokens.
+
+Set `PRICE_INPUT_PER_MILLION` and `PRICE_OUTPUT_PER_MILLION` to the applicable provider prices before relying on cost estimates.
+
+A configured price of zero does not establish that API usage is free.
