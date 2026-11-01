@@ -1,5 +1,4 @@
-
-import json
+﻿import json
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -14,6 +13,7 @@ def record_usage(
     cost_paise: float,
     latency_ms: int,
     fallback_used: bool,
+    usage_estimated: bool = False,
 ) -> None:
     """Append one successful model call to the JSONL usage log."""
     LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -26,6 +26,7 @@ def record_usage(
         "cost_paise": cost_paise,
         "latency_ms": latency_ms,
         "fallback_used": fallback_used,
+        "usage_estimated": usage_estimated,
     }
 
     with LOG_PATH.open("a", encoding="utf-8") as file:
@@ -35,7 +36,12 @@ def record_usage(
 def get_usage_summary() -> dict:
     """Summarize logged calls grouped by UTC date."""
     if not LOG_PATH.exists():
-        return {"total_requests": 0, "total_cost_paise": 0.0, "by_date": {}}
+        return {
+            "total_requests": 0,
+            "total_cost_paise": 0.0,
+            "estimated_usage_requests": 0,
+            "by_date": {},
+        }
 
     by_date = {}
 
@@ -54,6 +60,7 @@ def get_usage_summary() -> dict:
                     "input_tokens": 0,
                     "output_tokens": 0,
                     "cost_paise": 0.0,
+                    "estimated_usage_requests": 0,
                 },
             )
 
@@ -62,10 +69,16 @@ def get_usage_summary() -> dict:
             daily["output_tokens"] += record["output_tokens"]
             daily["cost_paise"] += record["cost_paise"]
 
+            if record.get("usage_estimated", False):
+                daily["estimated_usage_requests"] += 1
+
     return {
         "total_requests": sum(day["requests"] for day in by_date.values()),
         "total_cost_paise": round(
             sum(day["cost_paise"] for day in by_date.values()), 4
+        ),
+        "estimated_usage_requests": sum(
+            day["estimated_usage_requests"] for day in by_date.values()
         ),
         "by_date": by_date,
     }

@@ -1,7 +1,7 @@
-
-import pytest
+﻿import pytest
 
 from app.services.retry import (
+    MAX_BACKOFF_SECONDS,
     PermanentLLMError,
     TransientLLMError,
     retry_call,
@@ -12,13 +12,13 @@ def test_retries_then_succeeds(monkeypatch):
     attempts = 0
     delays = []
 
-    def fake_sleep(delay):
-        delays.append(delay)
-
-    monkeypatch.setattr("app.services.retry.time.sleep", fake_sleep)
+    monkeypatch.setattr(
+        "app.services.retry.time.sleep",
+        delays.append,
+    )
     monkeypatch.setattr(
         "app.services.retry.random.uniform",
-        lambda a, b: 0,
+        lambda low, high: high,
     )
 
     def operation():
@@ -38,7 +38,10 @@ def test_retries_then_succeeds(monkeypatch):
 
 
 def test_exhausted_retries_raise_error(monkeypatch):
-    monkeypatch.setattr("app.services.retry.time.sleep", lambda delay: None)
+    monkeypatch.setattr(
+        "app.services.retry.time.sleep",
+        lambda delay: None,
+    )
 
     attempts = 0
 
@@ -74,7 +77,7 @@ def test_timeout_error_is_retried(monkeypatch):
     )
     monkeypatch.setattr(
         "app.services.retry.random.uniform",
-        lambda a, b: 0,
+        lambda low, high: 0,
     )
 
     attempts = 0
@@ -92,3 +95,35 @@ def test_timeout_error_is_retried(monkeypatch):
 
     assert result == "success"
     assert attempts == 2
+
+
+def test_full_jitter_stays_within_backoff_limit(monkeypatch):
+    delays = []
+
+    monkeypatch.setattr(
+        "app.services.retry.time.sleep",
+        delays.append,
+    )
+    monkeypatch.setattr(
+        "app.services.retry.random.uniform",
+        lambda low, high: high,
+    )
+
+    def operation():
+        raise TransientLLMError("Temporary failure")
+
+    with pytest.raises(TransientLLMError):
+        retry_call(operation, max_attempts=6, base_delay=2)
+
+    assert delays == [2, 4, 8, 8, 8]
+    assert all(0 <= delay <= MAX_BACKOFF_SECONDS for delay in delays)
+
+
+def test_negative_base_delay_is_rejected():
+    with pytest.raises(ValueError):
+        retry_call(lambda: "success", base_delay=-1)
+
+
+def test_zero_attempts_are_rejected():
+    with pytest.raises(ValueError):
+        retry_call(lambda: "success", max_attempts=0)

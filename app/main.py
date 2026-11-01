@@ -1,5 +1,4 @@
-
-import json
+﻿import json
 from typing import Annotated
 
 from fastapi import Depends, FastAPI
@@ -8,18 +7,30 @@ from fastapi.responses import StreamingResponse
 from app.config import Settings, get_settings
 from app.schemas import ChatRequest, ChatResponse
 from app.services.llm import FakeLLM, FallbackLLM
+from app.services.openai_compat import OpenAICompatibleLLM
 from app.services.usage import get_usage_summary, record_usage
 
-app = FastAPI(title="SignalBooks", version="0.2.0")
+app = FastAPI(title="SignalBooks", version="0.3.0")
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
 
-def get_llm() -> FallbackLLM:
-    """Return mock models until a real provider is configured."""
+def get_llm(settings: SettingsDep) -> FallbackLLM:
+    """Build the configured primary model and its fallback."""
+    if settings.llm_provider == "fake":
+        primary = FakeLLM("fake-primary")
+    elif settings.llm_provider == "openai_compatible":
+        primary = OpenAICompatibleLLM(settings)
+    else:
+        raise ValueError(
+            f"Unsupported LLM provider: {settings.llm_provider}"
+        )
+
+    fallback = FakeLLM(settings.llm_fallback_model)
+
     return FallbackLLM(
-        primary=FakeLLM("fake-primary"),
-        fallback=FakeLLM("fake-fallback"),
+        primary=primary,
+        fallback=fallback,
     )
 
 
@@ -48,6 +59,7 @@ def chat(request: ChatRequest, llm: LLMDep) -> ChatResponse:
         cost_paise=result.cost_paise,
         latency_ms=result.latency_ms,
         fallback_used=result.fallback_used,
+        usage_estimated=result.usage_estimated,
     )
 
     return ChatResponse(
@@ -58,15 +70,18 @@ def chat(request: ChatRequest, llm: LLMDep) -> ChatResponse:
         cost_paise=result.cost_paise,
         latency_ms=result.latency_ms,
         fallback_used=result.fallback_used,
+        usage_estimated=result.usage_estimated,
     )
 
 
 @app.post("/chat/stream")
-def chat_stream(request: ChatRequest, llm: LLMDep) -> StreamingResponse:
-    """Stream a completed mock-model answer using Server-Sent Events."""
+def chat_stream(
+    request: ChatRequest,
+    llm: LLMDep,
+) -> StreamingResponse:
+    """Stream a completed answer using simulated SSE chunks."""
     result = llm.generate(request.question)
 
-    # Record usage once, after a successful model response.
     record_usage(
         model=result.model,
         input_tokens=result.input_tokens,
@@ -74,12 +89,14 @@ def chat_stream(request: ChatRequest, llm: LLMDep) -> StreamingResponse:
         cost_paise=result.cost_paise,
         latency_ms=result.latency_ms,
         fallback_used=result.fallback_used,
+        usage_estimated=result.usage_estimated,
     )
 
     def event_stream():
         metadata = {
             "model": result.model,
             "fallback_used": result.fallback_used,
+            "usage_estimated": result.usage_estimated,
         }
         yield f"event: metadata\ndata: {json.dumps(metadata)}\n\n"
 
@@ -94,6 +111,7 @@ def chat_stream(request: ChatRequest, llm: LLMDep) -> StreamingResponse:
             "output_tokens": result.output_tokens,
             "cost_paise": result.cost_paise,
             "latency_ms": result.latency_ms,
+            "usage_estimated": result.usage_estimated,
         }
         yield f"event: done\ndata: {json.dumps(completion)}\n\n"
 

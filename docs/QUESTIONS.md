@@ -6,7 +6,7 @@ These questions represent research tasks that SignalBooks should answer using te
 |---|---|---|---|
 | 1 | What was Bharti Airtel's India mobile ARPU in its latest available reported quarter, and for which quarter was it reported? | Airtel quarterly results and investor presentations | No, if one page contains the figure and reporting period |
 | 2 | How has Bharti Airtel's India mobile ARPU changed across the last three completed financial years? | Airtel annual reports and quarterly results | Yes |
-| 3 | How much did Bharti Airtel spend on capital expenditure in its latest completed financial year, and what reasons did management give for that spending? | Airtel annual report, financial statements, and management discussion | Yes |
+| 3 | How much did Bharti Airtel spend on capital expenditure in its latest completed financial year, and what reasons did management give for that spending? | Airtel annual reports, financial statements, and management discussion | Yes |
 | 4 | What progress has Bharti Airtel reported in expanding its 5G network, and which coverage or deployment metrics does it disclose? | Airtel annual reports and quarterly investor presentations | Yes |
 | 5 | What order book has Tejas Networks reported in its latest available results, and how has it changed across recent reported quarters? | Tejas Networks quarterly results presentations and annual reports | Yes |
 | 6 | Which major customers, markets, and product categories does Tejas Networks identify in its reports? | Tejas Networks annual reports and investor presentations | Yes |

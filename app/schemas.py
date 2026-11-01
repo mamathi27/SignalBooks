@@ -1,5 +1,4 @@
-
-from pydantic import BaseModel, Field
+﻿from pydantic import BaseModel, Field
 
 
 class ChatRequest(BaseModel):
@@ -14,3 +13,4 @@ class ChatResponse(BaseModel):
     cost_paise: float
     latency_ms: int
     fallback_used: bool
+    usage_estimated: bool = False

@@ -1,5 +1,4 @@
-
-from dataclasses import dataclass
+﻿from dataclasses import dataclass
 from typing import Protocol
 
 from app.services.retry import (
@@ -18,6 +17,7 @@ class LLMResponse:
     cost_paise: float
     latency_ms: int
     fallback_used: bool = False
+    usage_estimated: bool = False
 
 
 class LLMUnavailable(Exception):
@@ -63,6 +63,7 @@ class FakeLLM:
             output_tokens=len(answer.split()),
             cost_paise=0.0,
             latency_ms=0,
+            usage_estimated=False,
         )
 
 
@@ -71,7 +72,6 @@ def _generate_with_retry(
     question: str,
 ) -> LLMResponse:
     """Retry transient failures, but never retry permanent failures."""
-
     try:
         return retry_call(
             lambda: model.generate(question),
