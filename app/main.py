@@ -1,4 +1,4 @@
-﻿import json
+import json
 from typing import Annotated
 
 import psycopg
@@ -130,41 +130,82 @@ def chat_stream(
     request: ChatRequest,
     llm: LLMDep,
 ) -> StreamingResponse:
-    """Stream a completed answer using simulated SSE chunks."""
-    result = llm.generate(request.question)
-
-    record_usage(
-        model=result.model,
-        input_tokens=result.input_tokens,
-        output_tokens=result.output_tokens,
-        cost_paise=result.cost_paise,
-        latency_ms=result.latency_ms,
-        fallback_used=result.fallback_used,
-        usage_estimated=result.usage_estimated,
-    )
+    """Stream provider-generated tokens using server-sent events."""
 
     def event_stream():
-        metadata = {
-            "model": result.model,
-            "fallback_used": result.fallback_used,
-            "usage_estimated": result.usage_estimated,
-        }
-        yield f"event: metadata\ndata: {json.dumps(metadata)}\n\n"
+        final_response = None
+        metadata_sent = False
 
-        # This simulates token chunks; it is not provider-side streaming.
-        chunk_size = 12
-        for start in range(0, len(result.answer), chunk_size):
-            chunk = result.answer[start : start + chunk_size]
-            yield f"event: token\ndata: {json.dumps({'text': chunk})}\n\n"
+        try:
+            for event in llm.stream(request.question):
+                if event.text:
+                    if not metadata_sent:
+                        metadata = {
+                            "model": event.model or "unknown",
+                            "fallback_used": event.fallback_used,
+                            "usage_estimated": None,
+                        }
+                        yield (
+                            f"event: metadata\ndata: "
+                            f"{json.dumps(metadata)}\n\n"
+                        )
+                        metadata_sent = True
 
-        completion = {
-            "input_tokens": result.input_tokens,
-            "output_tokens": result.output_tokens,
-            "cost_paise": result.cost_paise,
-            "latency_ms": result.latency_ms,
-            "usage_estimated": result.usage_estimated,
-        }
-        yield f"event: done\ndata: {json.dumps(completion)}\n\n"
+                    yield (
+                        f"event: token\ndata: "
+                        f"{json.dumps({'text': event.text})}\n\n"
+                    )
+
+                if event.final_response is not None:
+                    final_response = event.final_response
+
+            if final_response is None:
+                yield (
+                    "event: error\ndata: "
+                    '{"message":"The model stream ended without a completion."}'
+                    "\n\n"
+                )
+                return
+
+            if not metadata_sent:
+                metadata = {
+                    "model": final_response.model,
+                    "fallback_used": final_response.fallback_used,
+                    "usage_estimated": final_response.usage_estimated,
+                }
+                yield (
+                    f"event: metadata\ndata: "
+                    f"{json.dumps(metadata)}\n\n"
+                )
+
+            record_usage(
+                model=final_response.model,
+                input_tokens=final_response.input_tokens,
+                output_tokens=final_response.output_tokens,
+                cost_paise=final_response.cost_paise,
+                latency_ms=final_response.latency_ms,
+                fallback_used=final_response.fallback_used,
+                usage_estimated=final_response.usage_estimated,
+            )
+
+            completion = {
+                "input_tokens": final_response.input_tokens,
+                "output_tokens": final_response.output_tokens,
+                "cost_paise": final_response.cost_paise,
+                "latency_ms": final_response.latency_ms,
+                "usage_estimated": final_response.usage_estimated,
+            }
+            yield (
+                f"event: done\ndata: "
+                f"{json.dumps(completion)}\n\n"
+            )
+
+        except Exception:
+            yield (
+                "event: error\ndata: "
+                '{"message":"Streaming failed."}'
+                "\n\n"
+            )
 
     return StreamingResponse(
         event_stream(),
@@ -174,7 +215,6 @@ def chat_stream(
             "X-Accel-Buffering": "no",
         },
     )
-
 
 @app.get("/usage")
 def usage() -> dict:

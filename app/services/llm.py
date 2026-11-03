@@ -1,10 +1,13 @@
-﻿from dataclasses import dataclass
+﻿from collections.abc import Iterator
+from dataclasses import dataclass
 from typing import Protocol
 
 from app.services.retry import (
     PermanentLLMError,
+    StreamInterruptedError,
     TransientLLMError,
     retry_call,
+    retry_stream,
 )
 
 
@@ -20,6 +23,16 @@ class LLMResponse:
     usage_estimated: bool = False
 
 
+@dataclass
+class LLMStreamEvent:
+    """Represents a streamed text chunk or the final response."""
+
+    text: str = ""
+    final_response: LLMResponse | None = None
+    model: str | None = None
+    fallback_used: bool = False
+
+
 class LLMUnavailable(Exception):
     """Raised when a model cannot provide a response."""
 
@@ -28,6 +41,9 @@ class LLMClient(Protocol):
     """Interface that every LLM implementation must provide."""
 
     def generate(self, question: str) -> LLMResponse:
+        ...
+
+    def stream(self, question: str) -> Iterator[LLMStreamEvent]:
         ...
 
 
@@ -66,6 +82,21 @@ class FakeLLM:
             usage_estimated=False,
         )
 
+    def stream(self, question: str) -> Iterator[LLMStreamEvent]:
+        """Simulate streaming for local development and CI."""
+        response = self.generate(question)
+
+        chunk_size = 12
+        for start in range(0, len(response.answer), chunk_size):
+            yield LLMStreamEvent(
+                text=response.answer[start:start + chunk_size],
+                model=response.model,
+                fallback_used=response.fallback_used,
+            )
+
+        yield LLMStreamEvent(final_response=response)
+
+
 
 def _generate_with_retry(
     model: LLMClient,
@@ -99,3 +130,42 @@ class FallbackLLM:
             response = _generate_with_retry(self.fallback, question)
             response.fallback_used = True
             return response
+
+
+    def stream(self, question: str) -> Iterator[LLMStreamEvent]:
+        """Stream from primary; use fallback only if primary fails before output."""
+        try:
+            yield from retry_stream(
+                lambda: self.primary.stream(question),
+                has_output=lambda event: bool(event.text),
+                max_attempts=3,
+            )
+            return
+
+        except StreamInterruptedError:
+            # Never switch models after part of an answer was emitted.
+            raise
+
+        except TransientLLMError:
+            # Primary exhausted retries before emitting any text.
+            pass
+
+        try:
+            for event in retry_stream(
+                lambda: self.fallback.stream(question),
+                has_output=lambda item: bool(item.text),
+                max_attempts=3,
+            ):
+                if event.final_response is not None:
+                    event.final_response.fallback_used = True
+
+                if event.text:
+                    event.fallback_used = True
+
+                yield event
+
+        except StreamInterruptedError:
+            raise
+
+        except TransientLLMError as exc:
+            raise LLMUnavailable(str(exc)) from exc
