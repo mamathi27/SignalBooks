@@ -196,3 +196,44 @@ The local PDF scan reported 112 PDFs, 7,386 pages, and zero unreadable PDFs. The
 - Complete source and reporting-period verification for the larger collection.
 - Review the final manifest and staged repository files before committing.
 - Confirm that the raw collection and virtual environment remain excluded from Git.
+
+
+## 11. Sample PDF Parsing Results
+
+### Sample run
+
+The Session 8 parser was run against the three PDFs in `data/sample/`.
+
+| Metric | Result |
+|---|---:|
+| PDF files processed | 3 |
+| Pages processed | 20 |
+| Native text pages | 16 |
+| OCR pages | 4 |
+| Needs OCR | 0 |
+| Empty pages | 0 |
+
+Output: `data/parsed/pages.jsonl`
+
+Each page record contains exactly seven fields: `doc_id`, `source_file`, `page`, `headings`, `text`, `tables`, and `method`. Page numbering starts at 1. Heading inheritance was checked on the sample financial statement.
+
+### Extraction observations and limitations
+
+- Native text extraction succeeded on 16 sample pages.
+- Four scanned pages used English OCR.
+- Four structured tables were extracted from presentation pages.
+- The scanned financial statement pages contain visually tabular content that was not extracted as structured tables; OCR text was retained instead.
+- OCR on the financial statement includes some joined or misread labels and corrupted numeric values. Those values must be checked against the original PDF and must not be treated as verified financial figures.
+- The sample run reported zero `needs_ocr` and zero empty pages. This does not establish that all documents in the larger collection are OCR-ready.
+
+### Automated tests
+
+Five parser tests were added for text cleaning, heading detection, contact-detail filtering, page-record creation, heading inheritance, and JSONL output. The full project test suite passes: 63 tests. Ruff checks pass.
+
+### Remaining parsing work
+
+- Review repeated headers, footers, and page-number removal.
+- Improve and test table extraction on scanned financial statements.
+- Add dedicated tests for OCR fallback and `needs_ocr`.
+- Audit the remaining local PDFs before processing the full collection.
+- Review generated page records and citations before beginning chunking and indexing.

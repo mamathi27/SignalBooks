@@ -46,3 +46,7 @@ Thumbs.db
 
 # Annual and quarterly PDFs in the separate dataset directory
 /dataset/**/*.pdf
+
+# Allow only the Session 8 parsed sample output
+!/data/parsed/
+!/data/parsed/pages.jsonl

@@ -6,3 +6,10 @@ annotated-doc==0.0.5
 httpx>=0.27
 
 psycopg[binary]>=3.2
+
+# GenAI Session 8 - document parsing
+pdfplumber
+beautifulsoup4
+pytesseract
+reportlab
+pypdf
