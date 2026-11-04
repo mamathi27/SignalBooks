@@ -159,3 +159,55 @@ SignalBooks records token usage and calculates estimated costs using configured 
 Set `PRICE_INPUT_PER_MILLION` and `PRICE_OUTPUT_PER_MILLION` to the applicable provider prices before relying on cost estimates.
 
 A configured price of zero does not establish that API usage is free.
+
+## Real-time LLM Streaming
+
+SignalBooks supports real-time LLM responses using Server-Sent Events (SSE).
+
+**Endpoint:** `POST /chat/stream`
+
+This endpoint consumes the LLM provider's stream directly and forwards generated text chunks to the client.
+
+### SSE Event Contract
+
+| Event | Description |
+|---|---|
+| `metadata` | Provides the model name and fallback status. |
+| `token` | Sends generated text chunks. |
+| `done` | Indicates successful completion and provides usage and cost information. |
+| `error` | Reports a streaming failure. |
+
+### Retry and Fallback Behaviour
+
+- Transient provider failures are retried up to three attempts.
+- If the primary model fails before producing output, the configured fallback model can be used.
+- If the primary model fails after producing partial output, the system does not switch models.
+- Interrupted streams return an SSE `error` event instead of a successful `done` event.
+
+### Usage Tracking
+
+Usage is recorded only after successful stream completion.
+
+The completion event includes:
+
+- Input tokens
+- Output tokens
+- Estimated cost in paise
+- Response latency
+- Whether token usage was estimated
+
+### Test Streaming Locally
+
+Start the application:
+
+```powershell
+uvicorn app.main:app --reload
+```
+
+Send a streaming request:
+
+```powershell
+curl.exe -N -X POST http://localhost:8000/chat/stream -H "Content-Type: application/json" -d "{\"question\":\"What is ARPU?\"}"
+```
+
+The `-N` option disables curl buffering so SSE events can be displayed as they arrive.
